@@ -1,0 +1,3040 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#07050d">
+<title>懷舊金曲猜歌大會 · 義工控制台</title>
+<style>
+  /* ============================================================
+     懷舊金曲猜歌大會 · 義工控制台
+     風格：80–90 年代香港霓虹 / 黑膠唱片 / 深夜電台
+     ============================================================ */
+
+  :root{
+    --bg:#07050d;
+    --bg-2:#120a1f;
+    --panel:#151022;
+    --panel-2:#1d1530;
+    --ink:#fff6e5;
+    --muted:#bcb0cf;
+    --pink:#ff3d81;
+    --pink-soft:#ff9abc;
+    --cyan:#2ee6ff;
+    --gold:#ffc857;
+    --green:#63ffb4;
+    --red:#ff6464;
+    --line:rgba(255,255,255,.13);
+    --line-strong:rgba(255,255,255,.24);
+    --font-body:"Noto Sans TC","PingFang HK","Microsoft JhengHei","Heiti TC","Arial",sans-serif;
+    --font-display:"Noto Serif TC","Songti TC","PMingLiU","Times New Roman",serif;
+    --radius:18px;
+  }
+
+  *{box-sizing:border-box;}
+  [hidden]{display:none !important;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:16px;
+    line-height:1.5;
+    background:
+      radial-gradient(circle at 12% -5%, rgba(255,61,129,.18), transparent 42%),
+      radial-gradient(circle at 90% 5%, rgba(46,230,255,.12), transparent 38%),
+      radial-gradient(circle at 55% 110%, rgba(255,200,87,.10), transparent 45%),
+      linear-gradient(155deg, #07050d 0%, #120a1f 52%, #07050d 100%);
+    background-attachment:fixed;
+    overflow-x:hidden;
+  }
+
+  /* 背景黑膠 */
+  .vinyl-bg{
+    position:fixed;
+    z-index:0;
+    right:-13vw;
+    top:-12vw;
+    width:58vw;
+    height:58vw;
+    max-width:820px;
+    max-height:820px;
+    border-radius:50%;
+    pointer-events:none;
+    opacity:.30;
+    background:
+      repeating-radial-gradient(circle at center, #181127 0 2px, #0a0710 2px 5px),
+      radial-gradient(circle at center, rgba(255,61,129,.20), transparent 62%);
+    box-shadow:0 0 90px rgba(255,61,129,.08), inset 0 0 80px rgba(0,0,0,.8);
+    animation:vinylSpin 90s linear infinite;
+  }
+  .vinyl-bg::after{
+    content:"";
+    position:absolute;
+    inset:34%;
+    border-radius:50%;
+    background:
+      radial-gradient(circle at center, #ffc857 0 7%, #2a1a3c 8% 18%, #100a1a 19% 100%);
+    box-shadow:0 0 45px rgba(255,200,87,.22);
+  }
+  @keyframes vinylSpin{to{transform:rotate(360deg);}}
+
+  /* 掃描線 */
+  .scanlines{
+    position:fixed;
+    inset:0;
+    z-index:2;
+    pointer-events:none;
+    opacity:.22;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,.035) 0 1px,
+      transparent 1px 3px
+    );
+    mix-blend-mode:overlay;
+  }
+
+  header, main, footer{position:relative;z-index:3;}
+
+  /* ============================================================
+     頂部：標題 + 計分板
+     ============================================================ */
+  .topbar{
+    max-width:1440px;
+    margin:0 auto;
+    padding:1.15rem 1.5rem 1rem;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem 2rem;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{min-width:0;}
+  .eyebrow{
+    color:var(--cyan);
+    font-size:.68rem;
+    font-weight:800;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    text-shadow:0 0 12px rgba(46,230,255,.45);
+    margin-bottom:.25rem;
+  }
+  h1{
+    margin:0;
+    font-family:var(--font-display);
+    font-size:clamp(1.7rem, 3.1vw, 2.8rem);
+    line-height:1.12;
+    letter-spacing:.055em;
+    color:#fffdf7;
+    text-shadow:
+      0 0 2px rgba(255,255,255,.8),
+      0 0 18px rgba(255,61,129,.40),
+      0 0 38px rgba(255,61,129,.22);
+  }
+  h1 .gold{
+    color:var(--gold);
+    text-shadow:
+      0 0 2px rgba(255,255,255,.55),
+      0 0 16px rgba(255,200,87,.55);
+  }
+  .subtitle{
+    margin:.35rem 0 0;
+    color:var(--muted);
+    font-size:.95rem;
+    font-weight:600;
+    letter-spacing:.04em;
+  }
+
+  /* 計分板 */
+  .scoreboard{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+    gap:.65rem;
+    align-items:stretch;
+    padding:.7rem;
+    min-width:min(100%, 440px);
+    background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+    border:1px solid var(--line);
+    border-radius:20px;
+    box-shadow:
+      0 18px 45px rgba(0,0,0,.28),
+      inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(8px);
+  }
+  .team{
+    min-width:0;
+    text-align:center;
+    padding:.5rem .55rem .6rem;
+    border-radius:14px;
+    border:1px solid var(--line);
+    background:rgba(8,5,14,.45);
+  }
+  .team-a{
+    border-color:rgba(46,230,255,.38);
+    background:linear-gradient(180deg, rgba(46,230,255,.12), rgba(8,5,14,.48));
+    box-shadow:inset 0 0 28px rgba(46,230,255,.06);
+  }
+  .team-b{
+    border-color:rgba(255,61,129,.42);
+    background:linear-gradient(180deg, rgba(255,61,129,.12), rgba(8,5,14,.48));
+    box-shadow:inset 0 0 28px rgba(255,61,129,.07);
+  }
+  .team-name{
+    font-size:.82rem;
+    font-weight:900;
+    letter-spacing:.22em;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .team-a .team-name{color:var(--cyan);}
+  .team-b .team-name{color:var(--pink-soft);}
+  .score{
+    font-family:var(--font-display);
+    font-size:clamp(2.3rem, 4vw, 3.8rem);
+    line-height:1;
+    font-weight:900;
+    color:#fff;
+    font-variant-numeric:tabular-nums;
+    margin:.12rem 0 .38rem;
+    text-shadow:
+      0 0 2px rgba(255,255,255,.6),
+      0 0 18px currentColor;
+  }
+  .team-a .score{color:#e9fdff;text-shadow:0 0 2px #fff,0 0 20px rgba(46,230,255,.8);}
+  .team-b .score{color:#fff1f6;text-shadow:0 0 2px #fff,0 0 20px rgba(255,61,129,.8);}
+  .score.pop{animation:scorePop .35s ease;}
+  @keyframes scorePop{
+    0%{transform:scale(1);}
+    40%{transform:scale(1.16);color:var(--gold);text-shadow:0 0 24px var(--gold);}
+    100%{transform:scale(1);}
+  }
+  .score-btns{display:flex;justify-content:center;gap:.4rem;}
+  .score-btn{
+    min-height:2.9rem;
+    min-width:3.3rem;
+    padding:.2rem .55rem;
+    border-radius:10px;
+    border:1px solid var(--line-strong);
+    background:rgba(255,255,255,.055);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:1.3rem;
+    font-weight:900;
+    line-height:1;
+    cursor:pointer;
+    touch-action:manipulation;
+    transition:transform .12s ease, background .15s ease, border-color .15s ease;
+  }
+  .score-btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.11);}
+  .score-btn:active{transform:translateY(0) scale(.97);}
+  .score-btn.plus{
+    color:#08120d;
+    border-color:rgba(99,255,180,.7);
+    background:linear-gradient(180deg, #9dffd0, #4de89c);
+    box-shadow:0 0 16px rgba(99,255,180,.25);
+  }
+  .score-btn.minus{
+    color:#ffd5d5;
+    border-color:rgba(255,100,100,.55);
+    background:rgba(255,100,100,.10);
+  }
+  .vs{
+    align-self:center;
+    font-family:var(--font-display);
+    font-size:1rem;
+    font-weight:900;
+    letter-spacing:.08em;
+    color:var(--gold);
+    text-shadow:0 0 12px rgba(255,200,87,.55);
+  }
+  .reset-btn{
+    grid-column:1 / -1;
+    min-height:2.7rem;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--muted);
+    font-family:inherit;
+    font-size:.85rem;
+    font-weight:800;
+    letter-spacing:.06em;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .reset-btn:hover{background:rgba(255,100,100,.10);color:#ffd5d5;border-color:rgba(255,100,100,.4);}
+
+  /* 檔案開啟警告 */
+  .file-warning{
+    position:relative;
+    z-index:4;
+    max-width:1440px;
+    margin:.8rem auto 0;
+    padding:.75rem 1.5rem;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:.5rem .9rem;
+    border:1px solid rgba(255,100,100,.55);
+    border-radius:12px;
+    background:rgba(255,100,100,.13);
+    color:#ffe1e1;
+    font-size:.88rem;
+    line-height:1.55;
+    box-shadow:0 8px 28px rgba(0,0,0,.25);
+  }
+  .file-warning strong{color:#ffb3b3;font-size:.95rem;white-space:nowrap;}
+  .file-warning button{
+    min-height:2.4rem;
+    padding:.3rem .8rem;
+    border-radius:8px;
+    border:1px solid rgba(255,200,87,.65);
+    background:var(--gold);
+    color:#1a1020;
+    font-family:inherit;
+    font-size:.8rem;
+    font-weight:900;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  @media (max-width:760px){
+    .file-warning{margin:.6rem 1rem 0;padding:.7rem .85rem;font-size:.8rem;}
+  }
+
+  /* ============================================================
+     主佈局
+     ============================================================ */
+  .layout{
+    max-width:1440px;
+    margin:0 auto;
+    padding:1.2rem 1.5rem 1.6rem;
+    display:grid;
+    grid-template-columns:minmax(280px, 340px) minmax(0, 1fr);
+    gap:1.2rem;
+    align-items:start;
+  }
+
+  /* 題目選單 */
+  .navigator{
+    position:sticky;
+    top:1rem;
+    max-height:calc(100vh - 2rem);
+    overflow:auto;
+    padding:1rem;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+    box-shadow:
+      0 18px 45px rgba(0,0,0,.28),
+      inset 0 1px 0 rgba(255,255,255,.07);
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,.22) transparent;
+  }
+  .navigator::-webkit-scrollbar{width:8px;}
+  .navigator::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:99px;}
+  .nav-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.6rem;
+    margin-bottom:.7rem;
+  }
+  .nav-head h2{
+    margin:0;
+    font-size:1.05rem;
+    letter-spacing:.12em;
+    color:var(--ink);
+  }
+  .nav-count{
+    color:var(--gold);
+    font-size:.78rem;
+    font-weight:900;
+    letter-spacing:.08em;
+    white-space:nowrap;
+  }
+  .filters{display:flex;flex-wrap:wrap;gap:.38rem;margin-bottom:.8rem;}
+  .filter-btn{
+    padding:.42rem .62rem;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.03);
+    color:var(--muted);
+    font-family:inherit;
+    font-size:.76rem;
+    font-weight:800;
+    letter-spacing:.02em;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .filter-btn b{color:inherit;font-weight:900;opacity:.8;}
+  .filter-btn:hover{border-color:var(--line-strong);color:var(--ink);}
+  .filter-btn.active{
+    color:#171021;
+    background:var(--gold);
+    border-color:var(--gold);
+    box-shadow:0 0 18px rgba(255,200,87,.25);
+  }
+  .filter-btn[data-filter="listen"].active{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 18px rgba(46,230,255,.25);}
+  .filter-btn[data-filter="continue"].active{background:var(--pink);border-color:var(--pink);color:#1b0710;box-shadow:0 0 18px rgba(255,61,129,.3);}
+  .filter-btn[data-filter="creative"].active{background:var(--gold);border-color:var(--gold);}
+
+  .q-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:.52rem;
+  }
+  .q-btn{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    min-height:4.05rem;
+    padding:.5rem .58rem .48rem .78rem;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:rgba(8,5,14,.58);
+    color:var(--ink);
+    font-family:inherit;
+    text-align:left;
+    cursor:pointer;
+    overflow:hidden;
+    transition:transform .14s ease, border-color .14s ease, background .14s ease, box-shadow .14s ease;
+  }
+  .q-btn:hover{
+    transform:translateY(-2px);
+    border-color:var(--line-strong);
+    background:rgba(255,255,255,.055);
+  }
+  .q-btn.active{
+    border-color:var(--gold);
+    background:linear-gradient(135deg, rgba(255,200,87,.22), rgba(255,61,129,.10));
+    box-shadow:0 0 0 1px rgba(255,200,87,.55), 0 0 22px rgba(255,200,87,.18);
+  }
+  .q-bar{
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:5px;
+    background:var(--cat-color, var(--cyan));
+    opacity:.85;
+  }
+  .q-num{
+    font-family:var(--font-display);
+    font-size:1.34rem;
+    font-weight:900;
+    line-height:1;
+    letter-spacing:.03em;
+    font-variant-numeric:tabular-nums;
+  }
+  .q-btn.active .q-num{color:var(--gold);}
+  .q-cat{
+    margin-top:.22rem;
+    font-size:.66rem;
+    font-weight:700;
+    letter-spacing:.04em;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .q-custom{
+    position:absolute;
+    top:.36rem;
+    right:.42rem;
+    color:var(--gold);
+    font-size:.72rem;
+    line-height:1;
+    text-shadow:0 0 8px rgba(255,200,87,.5);
+  }
+  .nav-tip{
+    margin-top:.75rem;
+    padding-top:.65rem;
+    border-top:1px dashed var(--line);
+    color:var(--muted);
+    font-size:.72rem;
+    line-height:1.55;
+  }
+
+  /* ============================================================
+     主畫面
+     ============================================================ */
+  .stage{
+    position:relative;
+    overflow:hidden;
+    scroll-margin-top:.8rem;
+    padding:clamp(1rem, 2.2vw, 1.8rem);
+    border:1px solid var(--line);
+    border-radius:22px;
+    background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+    box-shadow:
+      0 24px 70px rgba(0,0,0,.38),
+      inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .stage::before{
+    content:"";
+    position:absolute;
+    top:0;left:0;right:0;
+    height:3px;
+    background:linear-gradient(90deg, var(--pink), var(--gold), var(--cyan));
+    opacity:.9;
+  }
+  .stage.flash{animation:stageFlash .55s ease;}
+  @keyframes stageFlash{
+    0%,100%{box-shadow:0 24px 70px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.08);}
+    45%{box-shadow:0 0 0 3px rgba(255,200,87,.7), 0 0 46px rgba(255,200,87,.3), inset 0 0 60px rgba(255,200,87,.1);}
+  }
+
+  .stage-top{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:.7rem 1rem;
+    margin-bottom:.9rem;
+  }
+  .q-meta{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem;}
+  .category-chip{
+    display:inline-flex;
+    align-items:center;
+    padding:.34rem .8rem;
+    border-radius:999px;
+    border:1px solid rgba(46,230,255,.45);
+    background:rgba(46,230,255,.10);
+    color:var(--cyan);
+    font-size:.82rem;
+    font-weight:900;
+    letter-spacing:.08em;
+    white-space:nowrap;
+  }
+  .category-chip.cat-continue{
+    color:var(--pink-soft);
+    border-color:rgba(255,61,129,.5);
+    background:rgba(255,61,129,.11);
+  }
+  .category-chip.cat-creative{
+    color:var(--gold);
+    border-color:rgba(255,200,87,.5);
+    background:rgba(255,200,87,.10);
+  }
+  .q-index{
+    color:var(--muted);
+    font-size:.95rem;
+    font-weight:800;
+    letter-spacing:.05em;
+    font-variant-numeric:tabular-nums;
+  }
+  .stage-tools{display:flex;flex-wrap:wrap;gap:.45rem;}
+  .tool-btn{
+    min-height:2.55rem;
+    padding:.35rem .7rem;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.04);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:.83rem;
+    font-weight:800;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .tool-btn:hover{border-color:var(--cyan);background:rgba(46,230,255,.08);}
+
+  .question{
+    margin:.25rem 0 1.1rem;
+    padding-left:.85rem;
+    border-left:5px solid var(--gold);
+    font-size:clamp(1.7rem, 3.1vw, 2.85rem);
+    font-weight:900;
+    line-height:1.45;
+    letter-spacing:.02em;
+    color:#fffdf7;
+    text-wrap:balance;
+    max-width:30em;
+    text-shadow:0 2px 18px rgba(0,0,0,.35);
+    white-space:pre-line;
+  }
+
+  .answer-wrap{margin-bottom:1.05rem;}
+  .answer{
+    margin-bottom:.7rem;
+    padding:.85rem 1.1rem 1rem;
+    border:1px solid rgba(255,200,87,.5);
+    border-radius:14px;
+    background:linear-gradient(135deg, rgba(255,200,87,.16), rgba(255,61,129,.075));
+    box-shadow:inset 0 0 28px rgba(255,200,87,.08), 0 0 24px rgba(255,200,87,.08);
+  }
+  .answer.show{animation:answerIn .28s ease;}
+  @keyframes answerIn{
+    from{opacity:0;transform:translateY(-7px);}
+    to{opacity:1;transform:none;}
+  }
+  .answer-label{
+    color:var(--gold);
+    font-size:.72rem;
+    font-weight:900;
+    letter-spacing:.24em;
+    margin-bottom:.32rem;
+  }
+  .answer-text{
+    color:#fff9e9;
+    font-size:clamp(1.3rem, 2.35vw, 2rem);
+    font-weight:900;
+    line-height:1.55;
+    white-space:pre-line;
+    text-wrap:balance;
+  }
+  .reveal-btn{
+    min-height:3.15rem;
+    padding:.55rem 1.15rem;
+    border-radius:12px;
+    border:1px solid var(--gold);
+    background:rgba(255,200,87,.075);
+    color:var(--gold);
+    font-family:inherit;
+    font-size:1.12rem;
+    font-weight:900;
+    letter-spacing:.03em;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, transform .12s ease;
+  }
+  .reveal-btn:hover{background:rgba(255,200,87,.18);}
+  .reveal-btn:active{transform:scale(.985);}
+  .reveal-btn.shown{
+    background:var(--gold);
+    color:#1a1020;
+    box-shadow:0 0 22px rgba(255,200,87,.28);
+  }
+
+  .play-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:.7rem;
+    margin:.4rem 0 .75rem;
+  }
+  .play-btn{
+    position:relative;
+    min-height:5rem;
+    padding:.55rem 1rem;
+    border:0;
+    border-radius:16px;
+    background:linear-gradient(135deg, #ff2e6e 0%, #ff5c8a 42%, #ffb347 100%);
+    color:#1b0710;
+    font-family:inherit;
+    font-size:clamp(1.35rem, 2.2vw, 1.9rem);
+    font-weight:900;
+    letter-spacing:.035em;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:.7rem;
+    cursor:pointer;
+    overflow:hidden;
+    touch-action:manipulation;
+    box-shadow:
+      0 12px 34px rgba(255,61,129,.33),
+      inset 0 1px 0 rgba(255,255,255,.38);
+    transition:transform .13s ease, filter .15s ease, box-shadow .15s ease;
+  }
+  .play-btn:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.06);}
+  .play-btn:active:not(:disabled){transform:translateY(0) scale(.993);}
+  .play-btn:disabled{cursor:wait;opacity:.6;filter:grayscale(.28);}
+  .play-btn.playing{
+    background:linear-gradient(135deg, #14324a 0%, #1fb7cf 55%, #2ee6ff 100%);
+    color:#04151b;
+    box-shadow:0 12px 34px rgba(46,230,255,.22), inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  .play-btn.ended{
+    background:linear-gradient(135deg, #3c2a0a, #ffc857 58%, #ffe5a3);
+    color:#1b1304;
+  }
+  .play-btn .play-icon{
+    font-size:1.18em;
+    line-height:1;
+    flex:0 0 auto;
+  }
+  .play-btn.playing .play-icon{animation:iconPulse 1.25s ease-in-out infinite;}
+  @keyframes iconPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+  .replay-btn{
+    min-width:8.2rem;
+    padding:.4rem 1rem;
+    border-radius:16px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.04);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:.98rem;
+    font-weight:900;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .replay-btn:hover{border-color:var(--cyan);background:rgba(46,230,255,.08);}
+
+  .status-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:.4rem .9rem;
+    margin-bottom:.38rem;
+  }
+  .status-pill{
+    display:inline-flex;
+    align-items:center;
+    padding:.32rem .72rem;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.03);
+    color:var(--muted);
+    font-size:.82rem;
+    font-weight:900;
+    letter-spacing:.06em;
+    white-space:nowrap;
+  }
+  .status-pill::before{
+    content:"";
+    width:.55rem;
+    height:.55rem;
+    border-radius:50%;
+    background:currentColor;
+    margin-right:.45rem;
+    box-shadow:0 0 9px currentColor;
+    flex:0 0 auto;
+  }
+  .status-loading{color:var(--pink-soft);border-color:rgba(255,154,188,.35);}
+  .status-ready{color:var(--gold);border-color:rgba(255,200,87,.35);}
+  .status-playing{color:var(--green);border-color:rgba(99,255,180,.38);}
+  .status-playing::before{animation:dotBlink 1.1s ease-in-out infinite;}
+  @keyframes dotBlink{0%,100%{opacity:1;}50%{opacity:.28;}}
+  .status-paused{color:var(--gold);border-color:rgba(255,200,87,.35);}
+  .status-ended{color:var(--pink);border-color:rgba(255,61,129,.45);}
+  .status-ad{color:var(--cyan);border-color:rgba(46,230,255,.4);}
+  .status-error{color:var(--red);border-color:rgba(255,100,100,.5);}
+  .time-display{
+    color:var(--ink);
+    font-size:1.08rem;
+    font-weight:900;
+    letter-spacing:.06em;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+  .progress{
+    height:12px;
+    margin-bottom:1.05rem;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.075);
+    overflow:hidden;
+  }
+  .progress-fill{
+    width:0%;
+    height:100%;
+    border-radius:999px;
+    background:linear-gradient(90deg, var(--cyan), var(--gold) 55%, var(--pink));
+    box-shadow:0 0 14px rgba(255,61,129,.55);
+    transition:width .18s linear;
+  }
+
+  /* 小電視 + 提示 */
+  .stage-bottom{
+    display:grid;
+    grid-template-columns:minmax(220px, 320px) minmax(0,1fr);
+    gap:.9rem;
+    align-items:start;
+    margin-bottom:1rem;
+  }
+  .tv-frame{
+    padding:.55rem .55rem .5rem;
+    border-radius:16px;
+    border:1px solid var(--line);
+    background:#0a0712;
+    box-shadow:inset 0 0 36px rgba(0,0,0,.7), 0 10px 30px rgba(0,0,0,.25);
+  }
+  .tv-label{
+    color:var(--cyan);
+    font-size:.62rem;
+    font-weight:900;
+    letter-spacing:.2em;
+    margin:0 0 .4rem .1rem;
+    text-shadow:0 0 10px rgba(46,230,255,.4);
+  }
+  .player-wrap{
+    position:relative;
+    width:100%;
+    aspect-ratio:16 / 9;
+    overflow:hidden;
+    border-radius:8px;
+    background:#000;
+    border:1px solid rgba(255,255,255,.09);
+  }
+  .player-wrap iframe,
+  #ytplayer{
+    display:block;
+    width:100% !important;
+    height:100% !important;
+    border:0;
+  }
+  .tv-note{
+    margin:.4rem .1rem 0;
+    color:var(--muted);
+    font-size:.62rem;
+    line-height:1.45;
+  }
+  .hint-card{
+    padding:.9rem 1.05rem;
+    border-radius:16px;
+    border:1px solid rgba(46,230,255,.25);
+    background:rgba(46,230,255,.055);
+    min-height:100%;
+  }
+  .hint-title{
+    color:var(--cyan);
+    font-size:.7rem;
+    font-weight:900;
+    letter-spacing:.2em;
+    margin-bottom:.32rem;
+  }
+  .hint-text{
+    color:var(--ink);
+    font-size:.98rem;
+    font-weight:650;
+    line-height:1.65;
+  }
+  .hint-note{
+    margin-top:.5rem;
+    padding-top:.45rem;
+    border-top:1px dashed rgba(255,255,255,.12);
+    color:var(--muted);
+    font-size:.7rem;
+    line-height:1.45;
+  }
+
+  /* 錯誤提示 */
+  .error-banner{
+    margin:0 0 1rem;
+    padding:.85rem 1rem;
+    border-radius:13px;
+    border:1px solid rgba(255,100,100,.5);
+    background:rgba(255,100,100,.11);
+    color:#ffe1e1;
+    box-shadow:inset 0 0 28px rgba(255,100,100,.06);
+  }
+  .error-title{font-weight:900;font-size:.98rem;letter-spacing:.02em;}
+  .error-text{margin-top:.28rem;font-size:.86rem;line-height:1.6;color:#ffd0d0;}
+  .error-actions{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:.6rem;align-items:center;}
+  .error-link{
+    color:var(--gold);
+    font-weight:900;
+    font-size:.84rem;
+    text-decoration:none;
+    border-bottom:1px dotted var(--gold);
+  }
+  .error-close, .error-retry{
+    min-height:2.2rem;
+    padding:.25rem .7rem;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,.2);
+    background:rgba(255,255,255,.06);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:.78rem;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .error-close:hover, .error-retry:hover{background:rgba(255,255,255,.12);}
+
+  /* 義工工具 */
+  .tech-panel{
+    margin:0 0 1rem;
+    padding:0 .9rem .9rem;
+    border:1px dashed rgba(255,255,255,.2);
+    border-radius:14px;
+    background:rgba(0,0,0,.16);
+  }
+  .tech-panel summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.7rem;
+    padding:.8rem 0;
+    color:var(--muted);
+    font-size:.85rem;
+    font-weight:900;
+    letter-spacing:.03em;
+    cursor:pointer;
+    list-style:none;
+  }
+  .tech-panel summary::-webkit-details-marker{display:none;}
+  .tech-panel summary::after{content:"▾";color:var(--gold);font-size:.9rem;transition:transform .15s ease;}
+  .tech-panel[open] summary{color:var(--gold);}
+  .tech-panel[open] summary::after{transform:rotate(180deg);}
+  .tech-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);
+    gap:.75rem;
+    padding-top:.15rem;
+  }
+  .tech-card{
+    padding:.8rem;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.03);
+    min-width:0;
+  }
+  .tech-card.full{grid-column:1 / -1;}
+  .tech-card h3{
+    margin:0 0 .55rem;
+    color:var(--cyan);
+    font-size:.7rem;
+    font-weight:900;
+    letter-spacing:.18em;
+  }
+  .tech-song{
+    color:var(--ink);
+    font-size:.98rem;
+    font-weight:900;
+    line-height:1.5;
+  }
+  .tech-live{
+    margin-top:.3rem;
+    color:var(--muted);
+    font-size:.78rem;
+    font-variant-numeric:tabular-nums;
+    line-height:1.5;
+  }
+  .yt-link{
+    display:inline-block;
+    margin-top:.55rem;
+    color:var(--gold);
+    font-size:.8rem;
+    font-weight:900;
+    text-decoration:none;
+    border-bottom:1px dotted var(--gold);
+    line-height:1.5;
+  }
+  .yt-link:hover{color:#fff;}
+  .tech-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:.4rem;
+    margin-bottom:.45rem;
+  }
+  .tech-row:last-child{margin-bottom:0;}
+  .tech-row label{
+    color:var(--muted);
+    font-size:.76rem;
+    font-weight:800;
+  }
+  .tech-row input[type="number"],
+  .tech-row input[type="text"]{
+    min-height:2.35rem;
+    padding:.3rem .5rem;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:#0a0712;
+    color:var(--ink);
+    font-family:inherit;
+    font-size:.92rem;
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+  }
+  .tech-row input[type="number"]{width:5.4rem;}
+  .tech-row input[type="text"]{width:100%;}
+  .tech-row input:focus{border-color:var(--cyan);outline:2px solid rgba(46,230,255,.25);outline-offset:1px;}
+  .unit{color:var(--muted);font-size:.74rem;font-weight:700;margin-right:.2rem;}
+  .tech-btn{
+    min-height:2.35rem;
+    padding:.3rem .6rem;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.05);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:.76rem;
+    font-weight:800;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease, color .15s ease;
+  }
+  .tech-btn:hover{border-color:var(--cyan);background:rgba(46,230,255,.08);}
+  .tech-btn.gold{color:#1a1020;background:var(--gold);border-color:var(--gold);}
+  .tech-btn.gold:hover{background:#ffd98a;border-color:#ffd98a;}
+  .tech-btn.warn{color:#ffd1d1;border-color:rgba(255,100,100,.42);background:rgba(255,100,100,.08);}
+  .tech-btn.warn:hover{background:rgba(255,100,100,.16);border-color:rgba(255,100,100,.7);}
+  .tech-status{
+    margin-top:.25rem;
+    min-height:1.1em;
+    color:var(--gold);
+    font-size:.74rem;
+    font-weight:700;
+    line-height:1.45;
+  }
+  .tech-note{
+    margin-top:.45rem;
+    color:var(--muted);
+    font-size:.72rem;
+    line-height:1.6;
+  }
+  .tech-note code{
+    color:var(--gold);
+    font-family:ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size:.72rem;
+  }
+  .check-label{
+    display:inline-flex;
+    align-items:center;
+    gap:.42rem;
+    color:var(--ink) !important;
+    font-size:.8rem !important;
+    font-weight:800 !important;
+    cursor:pointer;
+  }
+  .check-label input[type="checkbox"]{
+    width:1.1rem;
+    height:1.1rem;
+    accent-color:var(--gold);
+  }
+
+  /* 上一題 / 下一題 */
+  .prev-next{
+    display:flex;
+    gap:.7rem;
+  }
+  .prev-next button{
+    flex:1;
+    min-height:3.8rem;
+    border-radius:14px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.04);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:1.1rem;
+    font-weight:900;
+    letter-spacing:.03em;
+    cursor:pointer;
+    transition:background .15s ease, border-color .15s ease, transform .12s ease;
+  }
+  .prev-next button:hover{background:rgba(255,255,255,.08);border-color:var(--line-strong);transform:translateY(-1px);}
+  .prev-next button:active{transform:translateY(0);}
+  .prev-next button.next{
+    color:var(--gold);
+    border-color:rgba(255,200,87,.52);
+    background:rgba(255,200,87,.07);
+  }
+  .prev-next button.next:hover{background:rgba(255,200,87,.14);border-color:var(--gold);}
+
+  /* 頁腳 */
+  footer{
+    max-width:1440px;
+    margin:0 auto;
+    padding:.9rem 1.5rem 1.8rem;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:.6rem 1.2rem;
+    border-top:1px solid var(--line);
+    color:var(--muted);
+    font-size:.76rem;
+  }
+  .shortcuts{display:flex;flex-wrap:wrap;gap:.3rem .55rem;align-items:center;}
+  kbd{
+    display:inline-block;
+    padding:.08rem .38rem;
+    border-radius:5px;
+    border:1px solid var(--line);
+    border-bottom-width:2px;
+    background:rgba(255,255,255,.07);
+    color:var(--ink);
+    font-family:ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size:.7rem;
+    line-height:1.35;
+  }
+
+  /* Toast */
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:1.4rem;
+    z-index:70;
+    transform:translateX(-50%) translateY(18px);
+    max-width:min(92vw, 560px);
+    padding:.72rem 1.15rem;
+    border-radius:999px;
+    border:1px solid rgba(255,200,87,.6);
+    background:#1b1229;
+    color:var(--ink);
+    font-size:.9rem;
+    font-weight:800;
+    text-align:center;
+    box-shadow:0 14px 40px rgba(0,0,0,.5), 0 0 20px rgba(255,200,87,.12);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .22s ease, transform .22s ease;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* 手動倒數覆蓋層 */
+  .countdown-overlay{
+    position:fixed;
+    inset:0;
+    z-index:80;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:1.5rem;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(255,61,129,.18), transparent 45%),
+      rgba(5,3,10,.94);
+    text-align:center;
+    backdrop-filter:blur(6px);
+  }
+  .countdown-label{
+    color:var(--muted);
+    font-size:.95rem;
+    font-weight:900;
+    letter-spacing:.12em;
+    margin-bottom:.5rem;
+  }
+  .countdown-number{
+    font-family:var(--font-display);
+    font-size:clamp(5rem, 18vw, 12rem);
+    font-weight:900;
+    line-height:1;
+    color:var(--gold);
+    font-variant-numeric:tabular-nums;
+    text-shadow:
+      0 0 4px #fff,
+      0 0 26px rgba(255,200,87,.85),
+      0 0 70px rgba(255,61,129,.45);
+  }
+  .countdown-sub{
+    color:var(--muted);
+    font-size:1rem;
+    font-weight:800;
+    letter-spacing:.1em;
+    margin-top:.4rem;
+  }
+  .countdown-actions{display:flex;gap:.7rem;margin-top:1.6rem;flex-wrap:wrap;justify-content:center;}
+  .countdown-actions button{
+    min-height:3.1rem;
+    padding:.5rem 1.2rem;
+    border-radius:12px;
+    border:1px solid var(--line-strong);
+    background:rgba(255,255,255,.07);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:1rem;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .countdown-actions button:hover{background:rgba(255,255,255,.14);}
+
+  /* 焦點 */
+  :focus-visible{
+    outline:3px solid var(--cyan);
+    outline-offset:3px;
+  }
+
+  /* ============================================================
+     響應式
+     ============================================================ */
+  @media (max-width: 1100px){
+    .layout{grid-template-columns:minmax(260px, 300px) minmax(0,1fr);}
+    .scoreboard{min-width:min(100%, 390px);}
+    .stage-bottom{grid-template-columns:minmax(200px, 280px) minmax(0,1fr);}
+  }
+  @media (max-width: 980px){
+    .layout{grid-template-columns:1fr;padding-top:.9rem;}
+    .navigator{
+      position:static;
+      max-height:42vh;
+      overflow:auto;
+    }
+    .q-grid{grid-template-columns:repeat(3, minmax(0,1fr));}
+    .stage{order:1;}
+    .navigator{order:0;}
+    .topbar{padding-top:.9rem;}
+  }
+  @media (max-width: 760px){
+    .topbar{padding:1rem 1rem .85rem;gap:.8rem;}
+    .scoreboard{width:100%;min-width:0;}
+    .layout{padding:.9rem 1rem 1.4rem;}
+    .stage{padding:1rem;}
+    .question{font-size:clamp(1.5rem, 5.2vw, 2.1rem);}
+    .stage-bottom{grid-template-columns:1fr;}
+    .play-row{grid-template-columns:1fr;}
+    .replay-btn{min-height:3.5rem;min-width:0;}
+    .q-grid{grid-template-columns:repeat(2, minmax(0,1fr));}
+    .tech-grid{grid-template-columns:1fr;}
+    .tech-card.full{grid-column:auto;}
+    .prev-next button{min-height:3.6rem;font-size:1rem;}
+    footer{padding:.8rem 1rem 1.5rem;}
+  }
+  @media (max-width: 480px){
+    .eyebrow{font-size:.58rem;letter-spacing:.2em;}
+    .subtitle{font-size:.84rem;}
+    .team{padding:.35rem .3rem .45rem;}
+    .team-name{font-size:.7rem;letter-spacing:.14em;}
+    .score{font-size:2.25rem;}
+    .score-btn{min-width:2.8rem;min-height:2.6rem;font-size:1.1rem;}
+    .vs{font-size:.78rem;}
+    .tool-btn{font-size:.76rem;padding:.3rem .55rem;}
+    .q-index{font-size:.82rem;}
+    .category-chip{font-size:.74rem;padding:.28rem .62rem;}
+    .question{padding-left:.65rem;border-left-width:4px;}
+    .answer-text{font-size:1.24rem;}
+    .reveal-btn{width:100%;font-size:1rem;}
+    .play-btn{font-size:1.25rem;min-height:4.5rem;}
+    .time-display{font-size:.98rem;}
+    .hint-text{font-size:.9rem;}
+    .tech-row input[type="number"]{width:4.6rem;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration:.001ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:.001ms !important;
+      scroll-behavior:auto !important;
+    }
+    .vinyl-bg{animation:none;}
+  }
+</style>
+</head>
+<body>
+<div class="vinyl-bg" aria-hidden="true"></div>
+<div class="scanlines" aria-hidden="true"></div>
+<noscript>
+  <div style="padding:1rem;background:#3a1010;color:#fff;font-weight:800;position:relative;z-index:100;">
+    此控制台需要 JavaScript 才能運作，請開啟瀏覽器的 JavaScript。
+  </div>
+</noscript>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="eyebrow">HONG KONG · 80s–90s · VOLUNTEER CONSOLE</div>
+    <h1>懷舊金曲<span class="gold">猜歌大會</span></h1>
+    <p class="subtitle">義工現場控制台 · 為視障長者而設</p>
+  </div>
+
+  <div class="scoreboard" aria-label="兩組計分板">
+    <div class="team team-a">
+      <div class="team-name">A 組</div>
+      <div class="score" id="scoreA" aria-live="polite">0</div>
+      <div class="score-btns">
+        <button class="score-btn minus" type="button" data-team="A" data-delta="-1" aria-label="A 組減一分">−1</button>
+        <button class="score-btn plus" type="button" data-team="A" data-delta="1" aria-label="A 組加一分">+1</button>
+      </div>
+    </div>
+    <div class="vs" aria-hidden="true">VS</div>
+    <div class="team team-b">
+      <div class="team-name">B 組</div>
+      <div class="score" id="scoreB" aria-live="polite">0</div>
+      <div class="score-btns">
+        <button class="score-btn minus" type="button" data-team="B" data-delta="-1" aria-label="B 組減一分">−1</button>
+        <button class="score-btn plus" type="button" data-team="B" data-delta="1" aria-label="B 組加一分">+1</button>
+      </div>
+    </div>
+    <button class="reset-btn" type="button" id="resetScores" aria-label="兩組分數歸零">↺ 分數歸零</button>
+  </div>
+</header>
+
+<div class="file-warning" id="fileWarning" hidden>
+  <strong>⚠️ 請用本機啟動器開啟</strong>
+  <span>你現在以檔案方式（file://）開啟，YouTube 播放器多數影片會無法播放。請關閉此頁，雙擊「開始遊戲.bat」；如果電腦沒有 Python，請用「開始遊戲-免Python.bat」以本機伺服器開啟。</span>
+  <button type="button" id="openLocalBtn">我已啟動伺服器，改用本機網址</button>
+</div>
+
+<main class="layout">
+  <aside class="navigator" aria-label="題目選單">
+    <div class="nav-head">
+      <h2>題目選單</h2>
+      <span class="nav-count" id="navCount">22 題</span>
+    </div>
+    <div class="filters" role="group" aria-label="題目分類">
+      <button class="filter-btn active" type="button" data-filter="all" aria-pressed="true">全部 <b>22</b></button>
+      <button class="filter-btn" type="button" data-filter="listen" aria-pressed="false">① 聽前奏 <b>8</b></button>
+      <button class="filter-btn" type="button" data-filter="continue" aria-pressed="false">② 接下一句 <b>7</b></button>
+      <button class="filter-btn" type="button" data-filter="creative" aria-pressed="false">③ 創意挑戰 <b>7</b></button>
+    </div>
+    <div class="q-grid" id="qGrid"></div>
+    <div class="nav-tip">用 ← / → 快速切題；按 Space 播放或暫停。<br>答案預設隱藏，切題時會自動收起。</div>
+  </aside>
+
+  <section class="stage" id="stage" aria-label="題目主畫面">
+    <div class="stage-top">
+      <div class="q-meta">
+        <span class="category-chip" id="categoryChip">聽前奏</span>
+        <span class="q-index" id="qIndex">第 1 題 / 22</span>
+      </div>
+      <div class="stage-tools">
+        <button class="tool-btn" type="button" id="speakBtn" title="以粵語讀出題目">🔊 讀題</button>
+        <button class="tool-btn" type="button" id="fullscreenBtn" title="全螢幕（F）">⛶ 全螢幕</button>
+      </div>
+    </div>
+
+    <h2 class="question" id="questionText" aria-live="polite"></h2>
+
+    <div class="answer-wrap">
+      <div class="answer" id="answerBox" hidden>
+        <div class="answer-label">答案</div>
+        <div class="answer-text" id="answerText" aria-live="polite"></div>
+      </div>
+      <button class="reveal-btn" type="button" id="revealBtn" aria-expanded="false" aria-controls="answerBox">👁️ 顯示答案</button>
+    </div>
+
+    <div class="play-row">
+      <button class="play-btn" type="button" id="playBtn" disabled>
+        <span class="play-icon" id="playIcon" aria-hidden="true">⏳</span>
+        <span class="play-label" id="playLabel">正在載入播放器…</span>
+      </button>
+      <button class="replay-btn" type="button" id="replayBtn" title="由本段開始重播（R）">↺ 重播本段</button>
+    </div>
+
+    <div class="status-row">
+      <span class="status-pill status-loading" id="statusPill" aria-live="polite">播放器載入中…</span>
+      <span class="time-display" id="timeDisplay">0:00 / 0:10</span>
+    </div>
+    <div class="progress" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="stage-bottom">
+      <div class="tv-frame">
+        <div class="tv-label">YOUTUBE · 小畫面</div>
+        <div class="player-wrap"><div id="ytplayer"></div></div>
+        <div class="tv-note">影片僅供義工參考；請用上方大按鈕控制。</div>
+      </div>
+      <div class="hint-card">
+        <div class="hint-title">義工提示</div>
+        <div class="hint-text" id="hintText"></div>
+        <div class="hint-note">答案預設隱藏；切題時會自動收起。可按 <kbd>A</kbd> 顯示／隱藏答案。</div>
+      </div>
+    </div>
+
+    <div class="error-banner" id="errorBanner" hidden>
+      <div class="error-title" id="errorTitle">⚠️ 播放器未能載入</div>
+      <div class="error-text" id="errorText"></div>
+      <div class="error-actions">
+        <a class="error-link" id="errorYtLink" href="#" target="_blank" rel="noopener">🔗 在 YouTube 開啟本題</a>
+        <button class="error-retry" type="button" id="errorRetry">↻ 重試</button>
+        <button class="error-close" type="button" id="errorClose">✕ 關閉提示</button>
+      </div>
+    </div>
+
+    <details class="tech-panel" id="techPanel">
+      <summary>🔧 義工工具：秒數微調 / 後備播放 / 更換影片</summary>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h3>本題資料（義工專用）</h3>
+          <div class="tech-song" id="techSong"></div>
+          <div class="tech-live" id="techLive">目前播放位置：—</div>
+          <a class="yt-link" id="ytLink" href="#" target="_blank" rel="noopener">🔗 在 YouTube 開啟此曲</a>
+          <div class="tech-note">這張卡會顯示歌名，請避免投影給參加者。正常畫面只會顯示題目與隱藏答案。</div>
+        </div>
+
+        <div class="tech-card">
+          <h3>段落秒數與影片</h3>
+          <div class="tech-row">
+            <label for="startInput">開始</label>
+            <input type="number" id="startInput" min="0" step="0.5" inputmode="decimal">
+            <span class="unit">秒</span>
+            <label for="endInput">結束</label>
+            <input type="number" id="endInput" min="0" step="0.5" inputmode="decimal">
+            <span class="unit">秒</span>
+          </div>
+          <div class="tech-row">
+            <button class="tech-btn" type="button" id="startNowBtn">⏺ 設開始＝現在</button>
+            <button class="tech-btn" type="button" id="endNowBtn">⏹ 設結束＝現在</button>
+          </div>
+          <div class="tech-row">
+            <button class="tech-btn" type="button" data-adjust="start:-1">開始 −1</button>
+            <button class="tech-btn" type="button" data-adjust="start:1">開始 +1</button>
+            <button class="tech-btn" type="button" data-adjust="end:-1">結束 −1</button>
+            <button class="tech-btn" type="button" data-adjust="end:1">結束 +1</button>
+          </div>
+          <div class="tech-row">
+            <label class="check-label"><input type="checkbox" id="freePlay"> 自由播放（不自動停）</label>
+          </div>
+          <div class="tech-row" style="margin-top:.55rem">
+            <label for="videoIdInput">影片 ID</label>
+            <input type="text" id="videoIdInput" spellcheck="false" autocomplete="off" placeholder="貼上 YouTube 網址或 11 位 ID">
+          </div>
+          <div class="tech-row">
+            <button class="tech-btn gold" type="button" id="applyTimesBtn">✔ 套用本題設定</button>
+            <button class="tech-btn" type="button" id="resetTimesBtn">↺ 重設本題</button>
+          </div>
+          <div class="tech-status" id="techStatus"></div>
+          <div class="tech-note">start / end 是影片內的「絕對秒數」。設定會自動儲存在本機瀏覽器。</div>
+        </div>
+
+        <div class="tech-card full">
+          <h3>後備工具（影片失敗或廣告太長時）</h3>
+          <div class="tech-row">
+            <button class="tech-btn" type="button" id="manualCountdownBtn">⏱️ 手動倒數本段</button>
+            <button class="tech-btn warn" type="button" id="resetAllBtn">🗑️ 清除所有分數與自訂設定</button>
+          </div>
+          <div class="tech-note">
+            在另一個視窗手動播放 YouTube，同時按「手動倒數本段」；到 0 秒會響鈴，提示你暫停。
+            如播放器顯示「影片不允許內嵌」，請用上方的 YouTube 連結手動播放。
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <nav class="prev-next" aria-label="切換題目">
+      <button type="button" id="prevBtn">◀ 上一題</button>
+      <button type="button" id="nextBtn" class="next">下一題 ▶</button>
+    </nav>
+  </section>
+</main>
+
+<footer>
+  <div>懷舊金曲猜歌大會 · 義工控制台 · 請先試播及微調秒數</div>
+  <div class="shortcuts">
+    <span><kbd>Space</kbd> 播放／暫停</span>
+    <span><kbd>←</kbd><kbd>→</kbd> 切題</span>
+    <span><kbd>A</kbd> 顯示答案</span>
+    <span><kbd>R</kbd> 重播本段</span>
+    <span><kbd>F</kbd> 全螢幕</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="countdown-overlay" id="countdownOverlay" hidden role="dialog" aria-modal="true" aria-label="後備倒數計時">
+  <div class="countdown-label">後備計時 · 到 0 秒會響鈴提示暫停</div>
+  <div class="countdown-number" id="countdownNumber">10</div>
+  <div class="countdown-sub" id="countdownSub">秒</div>
+  <div class="countdown-actions">
+    <button type="button" id="countdownStop">■ 停止</button>
+    <button type="button" id="countdownRestart">↻ 重新倒數</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+   懷舊金曲猜歌大會 · 義工控制台
+   ----------------------------------------------------------------------------
+   ★ 如何更換 YouTube 影片 ID ★
+   1. 開啟 YouTube，找到正確的歌曲影片。
+   2. 網址通常是 https://www.youtube.com/watch?v=XXXXXXXXXXX
+      v= 後面那 11 位字元就是 ytId。
+   3. 把下面對應題目的 ytId: "..." 換成新的 ID。
+   4. start / end 是「影片內的絕對秒數」，不是分段長度。
+      例如 start: 18.5, end: 31.8 = 由 18.5 秒播到 31.8 秒自動停。
+   5. 也可以不改程式：在網頁的「義工工具」直接貼上 YouTube 網址或 ID，
+      再按「套用本題設定」。設定會存在瀏覽器 localStorage，翌日再開仍會保留。
+   ============================================================================ */
+
+const QUESTIONS = [
+  /* ── 第一類：聽前奏猜歌 ───────────────────────────────── */
+  {
+    id: 1,
+    category: "listen",
+    question: "聽前奏，猜歌名與原唱。",
+    answer: "《上海灘》\n原唱：葉麗儀",
+    song: "上海灘",
+    artist: "葉麗儀",
+    ytId: "PpVNdL9Wz_M",
+    start: 0,
+    end: 10,
+    hint: "前奏約 10 秒；原曲歌聲約 19 秒才出現。"
+  },
+  {
+    id: 2,
+    category: "listen",
+    question: "這是哪部武俠劇的主題曲？由哪兩位合唱？",
+    answer: "《射鵰英雄傳》主題曲《鐵血丹心》\n原唱：羅文、甄妮",
+    song: "鐵血丹心",
+    artist: "羅文、甄妮",
+    ytId: "UhWtlvNvk-E",
+    start: 0,
+    end: 12,
+    hint: "國樂前奏 12 秒；原曲歌聲約 30 秒才出現。"
+  },
+  {
+    id: 3,
+    category: "listen",
+    question: "阿姐（汪明荃）的代表作，歌名是？",
+    answer: "《萬水千山總是情》\n原唱：汪明荃",
+    song: "萬水千山總是情",
+    artist: "汪明荃",
+    ytId: "AT_7PkorLAI",
+    start: 0,
+    end: 10,
+    hint: "前奏 10 秒；原曲歌聲約 15 秒才出現。"
+  },
+  {
+    id: 4,
+    category: "listen",
+    question: "歌詞有「吹呀吹，讓這風吹」，歌名與原唱是？",
+    answer: "《風的季節》\n原唱：徐小鳳",
+    song: "風的季節",
+    artist: "徐小鳳",
+    ytId: "33fAu83h5ZU",
+    start: 20,
+    end: 29.5,
+    hint: "由 20 秒開始播 9.5 秒前奏；此片為梅艷芳／徐小鳳紀念演出，仍可聽到原曲。"
+  },
+  {
+    id: 5,
+    category: "listen",
+    question: "唱出打工仔心聲的「歌神」是誰？歌名是？",
+    answer: "《半斤八兩》\n原唱：許冠傑",
+    song: "半斤八兩",
+    artist: "許冠傑",
+    ytId: "MPCYx5c7L4k",
+    start: 5.5,
+    end: 11.5,
+    hint: "影片先有幾秒介紹；5.5–11.5 秒是音樂前奏，12 秒開唱。"
+  },
+  {
+    id: 6,
+    category: "listen",
+    question: "蔡國權填詞作曲、徐小鳳唱紅的勵志經典是？",
+    answer: "《順流逆流》\n原唱：徐小鳳",
+    song: "順流逆流",
+    artist: "徐小鳳",
+    ytId: "CrFyxF-eQJQ",
+    start: 0,
+    end: 10,
+    hint: "前奏 10 秒；原曲歌聲約 23 秒才出現。"
+  },
+  {
+    id: 7,
+    category: "listen",
+    question: "節奏很快的打氣金曲，原唱是誰？",
+    answer: "《紅日》\n原唱：李克勤",
+    song: "紅日",
+    artist: "李克勤",
+    ytId: "vV86tCXg5kw",
+    start: 0,
+    end: 10,
+    hint: "前奏 10 秒；現場版歌聲約 12 秒出現。"
+  },
+  {
+    id: 8,
+    category: "listen",
+    question: "代表香港精神的歌曲，原唱是誰？",
+    answer: "《獅子山下》\n原唱：羅文",
+    song: "獅子山下",
+    artist: "羅文",
+    ytId: "EfUV4shGKbM",
+    start: 0,
+    end: 10,
+    hint: "前奏 10 秒；原曲歌聲約 24 秒才出現。"
+  },
+
+  /* ── 第二類：暫停接下一句 ─────────────────────────────── */
+  {
+    id: 9,
+    category: "continue",
+    question: "暫停在「如果命裡早注定分手，無需為我假意挽留…」\n請接唱下一句。",
+    answer: "「如果情是永恆不朽，怎會分手」\n《愛在深秋》· 譚詠麟",
+    song: "愛在深秋",
+    artist: "譚詠麟",
+    ytId: "ECFNHIe8bAI",
+    start: 54,
+    end: 64,
+    hint: "影片有約 54 秒開場講話；已設定 54 秒開始、64 秒停。"
+  },
+  {
+    id: 10,
+    category: "continue",
+    question: "暫停在「你問我愛你有多深，我愛你有幾分…」\n請接唱下一句。",
+    answer: "「我的情也真，我的愛也真，月亮代表我的心」\n《月亮代表我的心》· 鄧麗君",
+    song: "月亮代表我的心",
+    artist: "鄧麗君",
+    ytId: "znX5F09ysr0",
+    start: 0,
+    end: 24,
+    hint: "影片由第一句開始；24 秒停，讓長者接答案。"
+  },
+  {
+    id: 11,
+    category: "continue",
+    question: "暫停在「繁星流動，和你同路…」\n請接唱下一句。",
+    answer: "「從不相識，開始心接近，默默以真摯待人」\n《朋友》· 譚詠麟",
+    song: "朋友",
+    artist: "譚詠麟",
+    ytId: "16mGax7tGV8",
+    start: 12,
+    end: 21,
+    hint: "已跳過開場；12 秒開始、21 秒停。"
+  },
+  {
+    id: 12,
+    category: "continue",
+    question: "暫停在「愁緒揮不去苦悶散不去，為何我心一片空虛…」\n請接唱下一句。",
+    answer: "「感情已失去一切都失去，滿腔恨愁不可消除」\n《偏偏喜歡你》· 陳百強",
+    song: "偏偏喜歡你",
+    artist: "陳百強",
+    ytId: "kWOdxGRkdCE",
+    start: 39,
+    end: 50.5,
+    hint: "1989 東京音樂節演出；40 秒開始唱、50.5 秒停。"
+  },
+  {
+    id: 13,
+    category: "continue",
+    question: "暫停在「在你身邊路雖遠未疲倦，伴你漫行一段接一段…」\n請接唱下一句。",
+    answer: "「越過高峰另一峰卻又見，目標推遠，讓理想永遠在前面」\n《漫步人生路》· 鄧麗君",
+    song: "漫步人生路",
+    artist: "鄧麗君",
+    ytId: "fTpt41F6xl8",
+    start: 35,
+    end: 46.7,
+    hint: "1989 版本；36 秒開始唱、46.7 秒停。"
+  },
+  {
+    id: 14,
+    category: "continue",
+    question: "暫停在「一山還比一山高，真愛有如天高千百樣好…」\n請接最後一段。",
+    answer: "「論武功俗世中不知邊個高，或者絕招同途異路；\n但我知論愛心找不到更好，待我心世間始終你好」\n《世間始終你好》· 羅文、甄妮",
+    song: "世間始終你好",
+    artist: "羅文、甄妮",
+    ytId: "rtTbgb2_grs",
+    start: 42,
+    end: 53.7,
+    hint: "1998 現場版；43 秒開始唱、53.7 秒停。"
+  },
+  {
+    id: 15,
+    category: "continue",
+    question: "暫停在「徐徐回望，曾屬於彼此的晚上…」\n請接唱下一句。",
+    answer: "「紅紅仍是你，贈我的心中艷陽」\n《千千闋歌》· 陳慧嫻",
+    song: "千千闋歌",
+    artist: "陳慧嫻",
+    ytId: "a1DM7auyFmc",
+    start: 14.5,
+    end: 22.7,
+    hint: "已設定 14.5 秒開始、22.7 秒停。"
+  },
+
+  /* ── 第三類：創意挑戰 ─────────────────────────────────── */
+  {
+    id: 16,
+    category: "creative",
+    question: "聽前奏，猜這首武俠劇主題曲是？",
+    answer: "《小李飛刀》\n原唱：羅文",
+    song: "小李飛刀",
+    artist: "羅文",
+    ytId: "5RxJAYEltRo",
+    start: 0,
+    end: 10,
+    hint: "播放 10 秒前奏；歌聲約 17 秒才出現。"
+  },
+  {
+    id: 17,
+    category: "creative",
+    question: "聽開頭，猜兩種中國傳統樂器。",
+    answer: "古箏、笛子\n（《滄海一聲笑》）",
+    song: "滄海一聲笑",
+    artist: "許冠傑",
+    ytId: "kC435B-PTHM",
+    start: 0,
+    end: 11.5,
+    hint: "播放 11.5 秒開頭；6 秒開始唱，讓長者聽清楚樂器。"
+  },
+  {
+    id: 18,
+    category: "creative",
+    question: "聽洗腦數字，猜歌名與原唱。",
+    answer: "《數字人生》\n原唱：林子祥",
+    song: "數字人生",
+    artist: "林子祥",
+    ytId: "DnfTQ643apo",
+    start: 29.5,
+    end: 44.5,
+    hint: "影片有約 30 秒開場；29.5 秒開始播數字、44.5 秒停。"
+  },
+  {
+    id: 19,
+    category: "creative",
+    question: "歌詞提到「六嬸、三太公，大眾開台啦面似蓮蓉」…\n這首歌講什麼玩意？麻雀最厲害的牌型叫什麼？",
+    answer: "打麻雀；最厲害是「十三么」（食糊）\n《打雀英雄傳》· 許冠傑",
+    song: "打雀英雄傳",
+    artist: "許冠傑",
+    ytId: "ig3McmBRZvY",
+    start: 0,
+    end: 12,
+    hint: "播放 12 秒麻雀前奏；2017 現場版。"
+  },
+  {
+    id: 20,
+    category: "creative",
+    question: "這首歌最適合在哪兩個節日唱？\n（「長夜空虛使我懷舊事，明月朗相對念母親…」）",
+    answer: "母親節、父親節\n（《念親恩》· 陳百強）",
+    song: "念親恩",
+    artist: "陳百強",
+    ytId: "NSP9LH--6n4",
+    start: 75.5,
+    end: 91.5,
+    hint: "1985 現場版有約 76 秒開場；已設定 75.5 秒開始、91.5 秒停。"
+  },
+  {
+    id: 21,
+    category: "creative",
+    question: "男女情歌接龍：男聲唱「難解百般愁，相知愛意濃」…\n請接女聲！",
+    answer: "女：「情海變蒼茫，癡心遇冷風」\n《相思風雨中》· 張學友、湯寶如",
+    song: "相思風雨中",
+    artist: "張學友、湯寶如",
+    ytId: "rB2zTS9W4b0",
+    start: 27.5,
+    end: 33.8,
+    hint: "2024 現場版；28 秒男聲開始、33.8 秒停，接女聲。"
+  },
+  {
+    id: 22,
+    category: "creative",
+    question: "全場大合唱：暫停在「無論有幾多變遷，何必諸多掛牽…」\n請接唱下一句。",
+    answer: "「過了今天，再有一天，仲有幾個十年」\n《明日話今天》· 甄妮",
+    song: "明日話今天",
+    artist: "甄妮",
+    ytId: "m73-VIQGmYU",
+    start: 35.5,
+    end: 42.7,
+    hint: "1978 歡樂今宵版本；36 秒開始唱、42.7 秒停。"
+  }
+];
+
+/* ============================================================================
+   常數與狀態
+   ============================================================================ */
+const CATEGORY_META = {
+  listen:   { name: "聽前奏",   color: "#2ee6ff", chipClass: "cat-listen" },
+  continue: { name: "接下一句", color: "#ff3d81", chipClass: "cat-continue" },
+  creative: { name: "創意挑戰", color: "#ffc857", chipClass: "cat-creative" }
+};
+
+const STORAGE_KEYS = {
+  scores: "hkOldiesConsoleScoresV1",
+  state: "hkOldiesConsoleStateV1",
+  overrides: "hkOldiesConsoleOverridesV1"
+};
+
+const state = {
+  currentIndex: 0,
+  filter: "all",
+  scores: { A: 0, B: 0 },
+  answerShown: false,
+  overrides: {},
+  playerReady: false,
+  playerState: -2,
+  player: null,
+  currentLoadedId: null,
+  monitorTimer: null,
+  freePlay: false,
+  apiFailed: false,
+  apiPromise: null,
+  countdownTimer: null,
+  countdownRemaining: 0,
+  toastTimer: null,
+  speechAvailable: false,
+  lastErrorKind: null
+};
+
+/* ============================================================================
+   DOM 快取
+   ============================================================================ */
+const el = {
+  scoreA: document.getElementById("scoreA"),
+  scoreB: document.getElementById("scoreB"),
+  resetScores: document.getElementById("resetScores"),
+  navCount: document.getElementById("navCount"),
+  qGrid: document.getElementById("qGrid"),
+  categoryChip: document.getElementById("categoryChip"),
+  qIndex: document.getElementById("qIndex"),
+  questionText: document.getElementById("questionText"),
+  answerBox: document.getElementById("answerBox"),
+  answerText: document.getElementById("answerText"),
+  revealBtn: document.getElementById("revealBtn"),
+  playBtn: document.getElementById("playBtn"),
+  playIcon: document.getElementById("playIcon"),
+  playLabel: document.getElementById("playLabel"),
+  replayBtn: document.getElementById("replayBtn"),
+  statusPill: document.getElementById("statusPill"),
+  timeDisplay: document.getElementById("timeDisplay"),
+  progressFill: document.getElementById("progressFill"),
+  hintText: document.getElementById("hintText"),
+  speakBtn: document.getElementById("speakBtn"),
+  fullscreenBtn: document.getElementById("fullscreenBtn"),
+  prevBtn: document.getElementById("prevBtn"),
+  nextBtn: document.getElementById("nextBtn"),
+  stage: document.getElementById("stage"),
+  techSong: document.getElementById("techSong"),
+  techLive: document.getElementById("techLive"),
+  ytLink: document.getElementById("ytLink"),
+  startInput: document.getElementById("startInput"),
+  endInput: document.getElementById("endInput"),
+  videoIdInput: document.getElementById("videoIdInput"),
+  freePlay: document.getElementById("freePlay"),
+  applyTimesBtn: document.getElementById("applyTimesBtn"),
+  resetTimesBtn: document.getElementById("resetTimesBtn"),
+  startNowBtn: document.getElementById("startNowBtn"),
+  endNowBtn: document.getElementById("endNowBtn"),
+  techStatus: document.getElementById("techStatus"),
+  manualCountdownBtn: document.getElementById("manualCountdownBtn"),
+  resetAllBtn: document.getElementById("resetAllBtn"),
+  errorBanner: document.getElementById("errorBanner"),
+  errorTitle: document.getElementById("errorTitle"),
+  errorText: document.getElementById("errorText"),
+  errorYtLink: document.getElementById("errorYtLink"),
+  errorRetry: document.getElementById("errorRetry"),
+  errorClose: document.getElementById("errorClose"),
+  toast: document.getElementById("toast"),
+  fileWarning: document.getElementById("fileWarning"),
+  openLocalBtn: document.getElementById("openLocalBtn"),
+  countdownOverlay: document.getElementById("countdownOverlay"),
+  countdownNumber: document.getElementById("countdownNumber"),
+  countdownSub: document.getElementById("countdownSub"),
+  countdownStop: document.getElementById("countdownStop"),
+  countdownRestart: document.getElementById("countdownRestart")
+};
+
+/* ============================================================================
+   小工具
+   ============================================================================ */
+function currentQ(){
+  return QUESTIONS[state.currentIndex];
+}
+
+function clampNumber(n, min, max){
+  return Math.min(max, Math.max(min, n));
+}
+
+function formatTime(seconds){
+  const total = Math.max(0, Math.round(Number(seconds) || 0));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return m + ":" + String(s).padStart(2, "0");
+}
+
+function parseVideoId(raw){
+  const s = String(raw || "").trim();
+  if(!s) return "";
+  if(/^[A-Za-z0-9_-]{11}$/.test(s)) return s;
+  const match = s.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/i);
+  return match ? match[1] : "";
+}
+
+function effective(q){
+  const o = state.overrides[q.id] || {};
+  let start = Number.isFinite(Number(o.start)) ? Number(o.start) : q.start;
+  let end = Number.isFinite(Number(o.end)) ? Number(o.end) : q.end;
+  let ytId = typeof o.ytId === "string" && /^[A-Za-z0-9_-]{11}$/.test(o.ytId) ? o.ytId : q.ytId;
+  start = Math.max(0, start);
+  if(!Number.isFinite(end) || end <= start){
+    start = q.start;
+    end = q.end;
+  }
+  return { start, end, ytId };
+}
+
+function currentYouTubeUrl(){
+  const q = currentQ();
+  return "https://www.youtube.com/watch?v=" + encodeURIComponent(effective(q).ytId);
+}
+
+function toast(message){
+  el.toast.textContent = message;
+  el.toast.classList.add("show");
+  clearTimeout(state.toastTimer);
+  state.toastTimer = setTimeout(() => el.toast.classList.remove("show"), 2400);
+}
+
+function safeGet(key){
+  try{ return localStorage.getItem(key); }catch(e){ return null; }
+}
+function safeSet(key, value){
+  try{ localStorage.setItem(key, value); }catch(e){ /* 私密模式或 file:// 限制 */ }
+}
+function safeRemove(key){
+  try{ localStorage.removeItem(key); }catch(e){}
+}
+
+/* ============================================================================
+   儲存與載入
+   ============================================================================ */
+function loadStored(){
+  try{
+    const s = JSON.parse(safeGet(STORAGE_KEYS.scores) || "null");
+    if(s && Number.isFinite(s.A) && Number.isFinite(s.B)){
+      state.scores = { A: Math.round(s.A), B: Math.round(s.B) };
+    }
+  }catch(e){}
+
+  try{
+    const st = JSON.parse(safeGet(STORAGE_KEYS.state) || "null");
+    if(st && Number.isInteger(st.currentIndex) && st.currentIndex >= 0 && st.currentIndex < QUESTIONS.length){
+      state.currentIndex = st.currentIndex;
+    }
+    if(st && ["all", "listen", "continue", "creative"].includes(st.filter)){
+      state.filter = st.filter;
+    }
+  }catch(e){}
+
+  try{
+    const o = JSON.parse(safeGet(STORAGE_KEYS.overrides) || "null");
+    if(o && typeof o === "object" && !Array.isArray(o)){
+      const clean = {};
+      Object.keys(o).forEach(key => {
+        const item = o[key];
+        if(!item || typeof item !== "object") return;
+        const start = Number(item.start);
+        const end = Number(item.end);
+        const ytId = typeof item.ytId === "string" ? item.ytId : "";
+        if(Number.isFinite(start) && Number.isFinite(end) && end > start && start >= 0){
+          clean[key] = {
+            start: Math.round(start * 10) / 10,
+            end: Math.round(end * 10) / 10,
+            ...( /^[A-Za-z0-9_-]{11}$/.test(ytId) ? { ytId } : {} )
+          };
+        }
+      });
+      state.overrides = clean;
+    }
+  }catch(e){}
+}
+
+function saveScores(){
+  safeSet(STORAGE_KEYS.scores, JSON.stringify(state.scores));
+}
+function saveState(){
+  safeSet(STORAGE_KEYS.state, JSON.stringify({
+    currentIndex: state.currentIndex,
+    filter: state.filter
+  }));
+}
+function saveOverrides(){
+  safeSet(STORAGE_KEYS.overrides, JSON.stringify(state.overrides));
+}
+
+/* ============================================================================
+   計分板
+   ============================================================================ */
+function renderScores(){
+  el.scoreA.textContent = state.scores.A;
+  el.scoreB.textContent = state.scores.B;
+}
+
+function popScore(team){
+  const node = team === "A" ? el.scoreA : el.scoreB;
+  node.classList.remove("pop");
+  void node.offsetWidth;
+  node.classList.add("pop");
+  setTimeout(() => node.classList.remove("pop"), 380);
+}
+
+function changeScore(team, delta){
+  if(team !== "A" && team !== "B") return;
+  state.scores[team] = Math.max(-99, Math.min(999, state.scores[team] + delta));
+  renderScores();
+  popScore(team);
+  saveScores();
+  toast(team + " 組 " + (delta > 0 ? "+1" : "−1") + " → " + state.scores[team] + " 分");
+}
+
+function resetScores(){
+  if(!window.confirm("確定要將 A、B 兩組分數歸零嗎？")) return;
+  state.scores = { A: 0, B: 0 };
+  renderScores();
+  saveScores();
+  toast("兩組分數已歸零");
+}
+
+/* ============================================================================
+   題目選單
+   ============================================================================ */
+function categoryOf(q){
+  return CATEGORY_META[q.category] || CATEGORY_META.listen;
+}
+
+function visibleIndices(){
+  return QUESTIONS
+    .map((q, index) => ({ q, index }))
+    .filter(item => state.filter === "all" || item.q.category === state.filter)
+    .map(item => item.index);
+}
+
+function renderNav(){
+  const activeIndex = state.currentIndex;
+  const html = QUESTIONS.map((q, index) => {
+    const meta = categoryOf(q);
+    const active = index === activeIndex;
+    const custom = !!state.overrides[q.id];
+    const hidden = state.filter !== "all" && q.category !== state.filter;
+    return (
+      '<button type="button" class="q-btn' + (active ? " active" : "") + (custom ? " custom" : "") + '"' +
+      ' data-index="' + index + '"' +
+      ' style="--cat-color:' + meta.color + '"' +
+      (active ? ' aria-current="true"' : "") +
+      (hidden ? " hidden" : "") +
+      ' aria-label="第 ' + q.id + ' 題，' + meta.name + '">' +
+        '<span class="q-bar" aria-hidden="true"></span>' +
+        '<span class="q-num">' + String(q.id).padStart(2, "0") + '</span>' +
+        '<span class="q-cat">' + meta.name + '</span>' +
+        (custom ? '<span class="q-custom" title="已自訂秒數" aria-label="已自訂秒數">⚙</span>' : "") +
+      '</button>'
+    );
+  }).join("");
+
+  el.qGrid.innerHTML = html;
+
+  // 更新「全部 / 分類」的按鈕狀態
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    const isActive = btn.dataset.filter === state.filter;
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+
+  // 顯示目前分類的題數
+  const visible = visibleIndices();
+  el.navCount.textContent = visible.length + " 題";
+
+  // 桌面版才自動把現用題目捲入選單可視範圍
+  if(window.matchMedia("(min-width: 981px)").matches){
+    const activeBtn = el.qGrid.querySelector(".q-btn.active:not([hidden])");
+    if(activeBtn){
+      activeBtn.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+  }
+}
+
+function setFilter(filter){
+  if(!["all", "listen", "continue", "creative"].includes(filter)) return;
+  state.filter = filter;
+  const visible = visibleIndices();
+  if(visible.length && !visible.includes(state.currentIndex)){
+    goTo(visible[0]);
+  }else{
+    renderNav();
+  }
+  saveState();
+}
+
+/* ============================================================================
+   主畫面渲染
+   ============================================================================ */
+function renderQuestion(){
+  const q = currentQ();
+  const meta = categoryOf(q);
+  const eff = effective(q);
+
+  el.categoryChip.textContent = meta.name;
+  el.categoryChip.className = "category-chip " + meta.chipClass;
+  el.qIndex.textContent = "第 " + q.id + " 題 / " + QUESTIONS.length;
+
+  el.questionText.textContent = q.question;
+  el.answerText.textContent = q.answer;
+  el.hintText.textContent = q.hint;
+
+  setAnswerShown(false, { silent: true });
+
+  el.techSong.textContent = q.song + " · " + q.artist;
+  el.techLive.textContent = "目前播放位置：—";
+  el.ytLink.href = "https://www.youtube.com/watch?v=" + encodeURIComponent(eff.ytId);
+  el.errorYtLink.href = el.ytLink.href;
+
+  el.startInput.value = String(eff.start);
+  el.endInput.value = String(eff.end);
+  el.videoIdInput.value = eff.ytId;
+  el.techStatus.textContent = state.overrides[q.id]
+    ? "已自訂本題設定（會自動儲存）"
+    : "使用預設秒數（可在此微調）";
+
+  updateTimeDisplay(0, eff, eff.start);
+  el.progressFill.style.width = "0%";
+
+  if(!state.apiFailed){
+    hideError();
+  }
+
+  if(state.playerReady){
+    cueQuestion(q);
+  }else if(state.apiFailed){
+    setStatus("error", "播放器未能載入");
+    setPlayButton("⚠️", "播放器未載入", true);
+  }else{
+    setStatus("loading", "播放器載入中…");
+    setPlayButton("⏳", "正在載入播放器…", true);
+  }
+
+  renderNav();
+}
+
+function updateTimeDisplay(currentTime, eff, absoluteTime){
+  const duration = Math.max(0.1, eff.end - eff.start);
+  const elapsedRaw = Math.max(0, Number(currentTime) - eff.start);
+  const elapsed = Math.min(duration, elapsedRaw);
+  const shown = state.freePlay ? elapsedRaw : elapsed;
+  el.timeDisplay.textContent = formatTime(shown) + " / " + formatTime(duration);
+}
+
+function setStatus(kind, text){
+  el.statusPill.className = "status-pill status-" + kind;
+  el.statusPill.textContent = text;
+}
+
+function setPlayButton(icon, label, disabled){
+  el.playIcon.textContent = icon;
+  el.playLabel.textContent = label;
+  el.playBtn.disabled = !!disabled;
+}
+
+/* ============================================================================
+   答案顯示 / 隱藏
+   ============================================================================ */
+function setAnswerShown(shown, options = {}){
+  state.answerShown = !!shown;
+  if(shown){
+    el.answerBox.hidden = false;
+    el.answerBox.classList.remove("show");
+    void el.answerBox.offsetWidth;
+    el.answerBox.classList.add("show");
+    el.revealBtn.textContent = "🙈 隱藏答案";
+    el.revealBtn.classList.add("shown");
+    el.revealBtn.setAttribute("aria-expanded", "true");
+  }else{
+    el.answerBox.hidden = true;
+    el.answerBox.classList.remove("show");
+    el.revealBtn.textContent = "👁️ 顯示答案";
+    el.revealBtn.classList.remove("shown");
+    el.revealBtn.setAttribute("aria-expanded", "false");
+  }
+  if(!options.silent && !options.noToast){
+    toast(shown ? "答案已顯示" : "答案已隱藏");
+  }
+}
+
+function toggleAnswer(){
+  setAnswerShown(!state.answerShown);
+}
+
+/* ============================================================================
+   切題
+   ============================================================================ */
+function goTo(index){
+  if(!Number.isInteger(index) || index < 0 || index >= QUESTIONS.length) return;
+  if(index === state.currentIndex){
+    return;
+  }
+
+  // 切題前先停住音樂
+  if(state.playerReady && state.player){
+    try{
+      const YTStates = window.YT && window.YT.PlayerState ? window.YT.PlayerState : null;
+      if(YTStates && state.playerState === YTStates.PLAYING){
+        state.player.pauseVideo();
+      }
+    }catch(e){}
+  }
+  stopMonitor();
+  stopSpeech();
+  stopCountdown(true);
+
+  state.currentIndex = index;
+  saveState();
+  renderQuestion();
+
+  // 手機／窄螢幕：選題後自動回到主畫面
+  if(window.matchMedia("(max-width: 980px)").matches){
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.stage.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }
+}
+
+function nextQuestion(){
+  const visible = visibleIndices();
+  if(!visible.length) return;
+  const pos = visible.indexOf(state.currentIndex);
+  const nextPos = pos === -1 ? 0 : (pos + 1) % visible.length;
+  goTo(visible[nextPos]);
+}
+
+function prevQuestion(){
+  const visible = visibleIndices();
+  if(!visible.length) return;
+  const pos = visible.indexOf(state.currentIndex);
+  const prevPos = pos === -1 ? visible.length - 1 : (pos - 1 + visible.length) % visible.length;
+  goTo(visible[prevPos]);
+}
+
+/* ============================================================================
+   YouTube IFrame API
+   ============================================================================ */
+function loadYouTubeAPI(){
+  if(state.apiPromise) return state.apiPromise;
+
+  state.apiPromise = new Promise((resolve, reject) => {
+    if(window.YT && window.YT.Player){
+      resolve();
+      return;
+    }
+
+    let settled = false;
+    const done = () => {
+      if(settled) return;
+      settled = true;
+      resolve();
+    };
+    const fail = (err) => {
+      if(settled) return;
+      settled = true;
+      reject(err);
+    };
+
+    const previous = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function(){
+      if(typeof previous === "function"){
+        try{ previous(); }catch(e){}
+      }
+      done();
+    };
+
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    tag.async = true;
+    tag.onerror = () => fail(new Error("youtube-api-script-error"));
+    document.head.appendChild(tag);
+
+    window.setTimeout(() => {
+      if(window.YT && window.YT.Player) done();
+      else fail(new Error("youtube-api-timeout"));
+    }, 12000);
+  });
+
+  state.apiPromise.then(() => {
+    createPlayer();
+  }).catch(() => {
+    state.apiFailed = true;
+    setStatus("error", "播放器未能載入");
+    setPlayButton("⚠️", "播放器未載入", true);
+    showError("api");
+  });
+
+  return state.apiPromise;
+}
+
+function createPlayer(){
+  if(state.player) return;
+  if(!window.YT || !window.YT.Player){
+    state.apiFailed = true;
+    showError("api");
+    return;
+  }
+
+  const origin = /^https?:$/.test(location.protocol) ? location.origin : undefined;
+
+  try{
+    state.player = new window.YT.Player("ytplayer", {
+      width: "100%",
+      height: "100%",
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        rel: 0,
+        modestbranding: 1,
+        playsinline: 1,
+        iv_load_policy: 3,
+        ...(origin ? { origin } : {})
+      },
+      events: {
+        onReady: onPlayerReady,
+        onStateChange: onPlayerStateChange,
+        onError: onPlayerError
+      }
+    });
+  }catch(e){
+    state.apiFailed = true;
+    showError("api");
+    setStatus("error", "播放器初始化失敗");
+    setPlayButton("⚠️", "播放器初始化失敗", true);
+  }
+}
+
+function onPlayerReady(){
+  state.playerReady = true;
+  state.apiFailed = false;
+  state.lastErrorKind = null;
+  hideError();
+  setStatus("ready", "準備播放");
+  setPlayButton("🎵", "播放音樂", false);
+  cueQuestion(currentQ());
+}
+
+function onPlayerStateChange(event){
+  state.playerState = event.data;
+  const YTStates = window.YT.PlayerState;
+
+  if(event.data === YTStates.PLAYING){
+    if(isLikelyAd()){
+      setStatus("ad", "廣告播放中…");
+      setPlayButton("⏸️", "暫停音樂", false);
+      startMonitor();
+      return;
+    }
+    state.lastErrorKind = null;
+    if(!state.apiFailed) hideError();
+    setStatus("playing", "播放中");
+    setPlayButton("⏸️", "暫停音樂", false);
+    el.playBtn.classList.add("playing");
+    el.playBtn.classList.remove("ended");
+    startMonitor();
+    return;
+  }
+
+  if(event.data === YTStates.PAUSED){
+    stopMonitor();
+    updateFromPlayer();
+    const q = currentQ();
+    const eff = effective(q);
+    let t = 0;
+    try{ t = state.player.getCurrentTime(); }catch(e){}
+    if(t >= eff.end - 0.4){
+      setStatus("ended", "已到結束點");
+      el.playBtn.classList.add("ended");
+      el.playBtn.classList.remove("playing");
+      setPlayButton("🔁", "重播本段", false);
+      updateTimeDisplay(eff.end, eff, eff.end);
+      el.progressFill.style.width = "100%";
+    }else{
+      setStatus("paused", "已暫停");
+      el.playBtn.classList.remove("playing", "ended");
+      setPlayButton("▶", "繼續播放", false);
+    }
+    return;
+  }
+
+  if(event.data === YTStates.BUFFERING){
+    setStatus("loading", "緩衝中…");
+    setPlayButton("⏳", "緩衝中…", false);
+    startMonitor();
+    return;
+  }
+
+  if(event.data === YTStates.CUED || event.data === YTStates.UNSTARTED){
+    stopMonitor();
+    setStatus("ready", "準備播放");
+    el.playBtn.classList.remove("playing", "ended");
+    setPlayButton("🎵", "播放音樂", false);
+    const eff = effective(currentQ());
+    updateTimeDisplay(eff.start, eff, eff.start);
+    el.progressFill.style.width = "0%";
+    return;
+  }
+
+  if(event.data === YTStates.ENDED){
+    stopMonitor();
+    const eff = effective(currentQ());
+    setStatus("ended", "已播完");
+    el.playBtn.classList.add("ended");
+    el.playBtn.classList.remove("playing");
+    setPlayButton("🔁", "重播本段", false);
+    updateTimeDisplay(eff.end, eff, eff.end);
+    el.progressFill.style.width = "100%";
+    return;
+  }
+}
+
+function onPlayerError(event){
+  const code = event && event.data;
+  state.lastErrorKind = "video";
+  stopMonitor();
+  setStatus("error", "影片無法播放");
+  setPlayButton("⚠️", "無法播放 · 請看提示", false);
+  showError("video", code);
+}
+
+function isLikelyAd(){
+  if(!state.playerReady || !state.player) return false;
+  try{
+    const d = Number(state.player.getDuration());
+    // 所有歌曲都超過 2 分鐘；短片廣告通常 < 90 秒。
+    return Number.isFinite(d) && d > 0 && d < 90;
+  }catch(e){
+    return false;
+  }
+}
+
+function cueQuestion(q){
+  if(!state.playerReady || !state.player) return;
+  const eff = effective(q);
+  state.currentLoadedId = eff.ytId;
+  state.lastErrorKind = null;
+  if(!state.apiFailed) hideError();
+
+  try{
+    state.player.cueVideoById({
+      videoId: eff.ytId,
+      startSeconds: eff.start
+    });
+    setStatus("ready", "準備播放");
+    setPlayButton("🎵", "播放音樂", false);
+    el.playBtn.classList.remove("playing", "ended");
+    updateTimeDisplay(eff.start, eff, eff.start);
+    updateTechLive(eff.start, eff);
+    el.progressFill.style.width = "0%";
+  }catch(e){
+    showError("video", 2);
+  }
+}
+
+function loadAndPlay(eff){
+  if(!state.playerReady || !state.player) return;
+  state.currentLoadedId = eff.ytId;
+  state.lastErrorKind = null;
+  if(!state.apiFailed) hideError();
+  setStatus("loading", "載入中…");
+  setPlayButton("⏳", "載入中…", false);
+  try{
+    state.player.loadVideoById({
+      videoId: eff.ytId,
+      startSeconds: eff.start
+    });
+  }catch(e){
+    showError("video", 2);
+  }
+}
+
+function togglePlay(){
+  if(!state.playerReady){
+    toast("播放器尚未載入，請檢查網絡或使用後備播放。");
+    return;
+  }
+  const q = currentQ();
+  const eff = effective(q);
+  const YTStates = window.YT.PlayerState;
+
+  if(state.playerState === YTStates.PLAYING){
+    try{ state.player.pauseVideo(); }catch(e){}
+    return;
+  }
+
+  if(state.currentLoadedId !== eff.ytId){
+    loadAndPlay(eff);
+    return;
+  }
+
+  let t = 0;
+  try{ t = state.player.getCurrentTime(); }catch(e){}
+
+  if(state.playerState === YTStates.ENDED || t >= eff.end - 0.4){
+    try{ state.player.seekTo(eff.start, true); }catch(e){}
+    try{ state.player.playVideo(); }catch(e){}
+    setStatus("loading", "重播中…");
+    return;
+  }
+
+  if(state.playerState === YTStates.CUED || state.playerState === YTStates.UNSTARTED){
+    try{ state.player.seekTo(eff.start, true); }catch(e){}
+  }
+
+  try{ state.player.playVideo(); }catch(e){}
+}
+
+function replaySegment(){
+  if(!state.playerReady){
+    toast("播放器尚未載入。");
+    return;
+  }
+  const eff = effective(currentQ());
+  if(state.currentLoadedId !== eff.ytId){
+    loadAndPlay(eff);
+    return;
+  }
+  try{
+    state.player.seekTo(eff.start, true);
+    state.player.playVideo();
+    setStatus("loading", "重播中…");
+    setPlayButton("⏳", "重播中…", false);
+  }catch(e){
+    showError("video", 2);
+  }
+}
+
+/* ============================================================================
+   進度監控
+   ============================================================================ */
+function startMonitor(){
+  stopMonitor();
+  state.monitorTimer = window.setInterval(monitorTick, 200);
+}
+
+function stopMonitor(){
+  if(state.monitorTimer){
+    window.clearInterval(state.monitorTimer);
+    state.monitorTimer = null;
+  }
+}
+
+function updateFromPlayer(){
+  if(!state.playerReady || !state.player) return;
+  let t = 0;
+  try{ t = state.player.getCurrentTime(); }catch(e){ return; }
+  const eff = effective(currentQ());
+  updateTimeDisplay(t, eff, t);
+  updateTechLive(t, eff);
+  const duration = Math.max(0.1, eff.end - eff.start);
+  const pct = clampNumber(((t - eff.start) / duration) * 100, 0, 100);
+  el.progressFill.style.width = pct + "%";
+}
+
+function updateTechLive(t, eff){
+  const abs = Number(t) || 0;
+  el.techLive.textContent =
+    "目前播放位置：" + abs.toFixed(1) + " 秒（絕對） · 本段 " +
+    eff.start.toFixed(1) + "–" + eff.end.toFixed(1) + " 秒";
+}
+
+function monitorTick(){
+  if(!state.playerReady || !state.player) return;
+  const YTStates = window.YT.PlayerState;
+  if(state.playerState !== YTStates.PLAYING && state.playerState !== YTStates.BUFFERING) return;
+
+  if(isLikelyAd()){
+    setStatus("ad", "廣告播放中…");
+    el.timeDisplay.textContent = "廣告…";
+    return;
+  }
+
+  let t = 0;
+  try{ t = state.player.getCurrentTime(); }catch(e){ return; }
+
+  const eff = effective(currentQ());
+  const duration = Math.max(0.1, eff.end - eff.start);
+  const elapsedRaw = Math.max(0, t - eff.start);
+  const elapsed = Math.min(duration, elapsedRaw);
+
+  el.timeDisplay.textContent = formatTime(state.freePlay ? elapsedRaw : elapsed) + " / " + formatTime(duration);
+  el.progressFill.style.width = clampNumber((elapsed / duration) * 100, 0, 100) + "%";
+  updateTechLive(t, eff);
+
+  // 如果 currentTime 離開始點太遠，可能仍在前置廣告／緩衝，不做自動停。
+  if(t < eff.start - 3) return;
+
+  if(!state.freePlay && t >= eff.end - 0.15 && state.playerState === YTStates.PLAYING){
+    try{ state.player.pauseVideo(); }catch(e){}
+    setStatus("ended", "已到結束點");
+    el.playBtn.classList.add("ended");
+    el.playBtn.classList.remove("playing");
+    setPlayButton("🔁", "重播本段", false);
+    el.timeDisplay.textContent = formatTime(duration) + " / " + formatTime(duration);
+    el.progressFill.style.width = "100%";
+    stopMonitor();
+    el.stage.classList.add("flash");
+    window.setTimeout(() => el.stage.classList.remove("flash"), 650);
+  }
+}
+
+/* ============================================================================
+   錯誤提示
+   ============================================================================ */
+function showError(kind, code){
+  state.lastErrorKind = kind;
+  el.errorBanner.hidden = false;
+  const link = currentYouTubeUrl();
+  el.errorYtLink.href = link;
+  el.errorYtLink.textContent = "🔗 在 YouTube 開啟本題";
+
+  if(kind === "api"){
+    el.errorTitle.textContent = "⚠️ YouTube 播放器未能載入";
+    el.errorText.textContent = "請檢查網絡，或使用下方連結手動播放。你也可以用義工工具中的「手動倒數本段」計時。";
+    el.errorRetry.textContent = "↻ 重新載入";
+  }else{
+    let reason = "此影片暫時無法播放。";
+    if(code === 2) reason = "影片 ID 無效，請在義工工具中更換影片。";
+    else if(code === 5) reason = "播放器發生 HTML5 錯誤，請重試或更換影片。";
+    else if(code === 100) reason = "找不到此影片（可能已下架或設為私人）。";
+    else if(code === 101 || code === 150) reason = "此影片不允許在其他網站內嵌播放。";
+    el.errorTitle.textContent = "⚠️ 這題的影片無法播放";
+    el.errorText.textContent = reason + " 你可以用下方連結在 YouTube 手動播放，或在義工工具中貼上另一個影片 ID。";
+    el.errorRetry.textContent = "↻ 重試播放";
+  }
+}
+
+function hideError(){
+  el.errorBanner.hidden = true;
+}
+
+/* ============================================================================
+   義工工具：秒數 / 影片 ID
+   ============================================================================ */
+function applyTimes(){
+  const q = currentQ();
+  const start = Number(el.startInput.value);
+  const end = Number(el.endInput.value);
+  const id = parseVideoId(el.videoIdInput.value);
+
+  if(!Number.isFinite(start) || start < 0){
+    toast("開始秒數無效，請輸入 0 或以上。");
+    return;
+  }
+  if(!Number.isFinite(end) || end <= start + 0.2){
+    toast("結束秒數必須大於開始秒數。");
+    return;
+  }
+  if(!id){
+    toast("影片 ID 無效，請貼上 11 位 YouTube ID 或完整網址。");
+    return;
+  }
+
+  const roundedStart = Math.round(start * 10) / 10;
+  const roundedEnd = Math.round(end * 10) / 10;
+  const isDefault = roundedStart === q.start && roundedEnd === q.end && id === q.ytId;
+
+  if(isDefault){
+    delete state.overrides[q.id];
+  }else{
+    state.overrides[q.id] = {
+      start: roundedStart,
+      end: roundedEnd,
+      ...(id !== q.ytId ? { ytId: id } : {})
+    };
+  }
+  saveOverrides();
+
+  el.videoIdInput.value = id;
+  el.techStatus.textContent = state.overrides[q.id]
+    ? "已套用並儲存本題設定。"
+    : "已回復預設秒數。";
+  el.ytLink.href = "https://www.youtube.com/watch?v=" + encodeURIComponent(effective(q).ytId);
+  el.errorYtLink.href = el.ytLink.href;
+
+  if(state.playerReady && state.player){
+    try{ state.player.pauseVideo(); }catch(e){}
+    state.currentLoadedId = null;
+    cueQuestion(q);
+  }
+
+  updateTimeDisplay(0, effective(q), effective(q).start);
+  el.progressFill.style.width = "0%";
+  renderNav();
+  toast("已套用本題設定");
+}
+
+function resetTimes(){
+  const q = currentQ();
+  delete state.overrides[q.id];
+  saveOverrides();
+
+  const eff = effective(q);
+  el.startInput.value = String(eff.start);
+  el.endInput.value = String(eff.end);
+  el.videoIdInput.value = eff.ytId;
+  el.techStatus.textContent = "已重設為預設秒數。";
+  el.ytLink.href = "https://www.youtube.com/watch?v=" + encodeURIComponent(eff.ytId);
+  el.errorYtLink.href = el.ytLink.href;
+
+  if(state.playerReady && state.player){
+    try{ state.player.pauseVideo(); }catch(e){}
+    state.currentLoadedId = null;
+    cueQuestion(q);
+  }
+
+  updateTimeDisplay(0, eff, eff.start);
+  el.progressFill.style.width = "0%";
+  renderNav();
+  toast("已重設本題秒數");
+}
+
+function setNow(field){
+  if(!state.playerReady || !state.player){
+    toast("播放器尚未載入，無法讀取目前位置。");
+    return;
+  }
+  let t = 0;
+  try{ t = state.player.getCurrentTime(); }catch(e){
+    toast("無法讀取播放位置。");
+    return;
+  }
+  const rounded = Math.round(t * 10) / 10;
+  if(field === "start"){
+    el.startInput.value = String(rounded);
+  }else{
+    el.endInput.value = String(rounded);
+  }
+  el.techStatus.textContent = "已填入目前位置 " + rounded.toFixed(1) + " 秒；請按「套用本題設定」。";
+}
+
+function adjustTime(field, delta){
+  const q = currentQ();
+  const eff = effective(q);
+  let start = Number(el.startInput.value);
+  let end = Number(el.endInput.value);
+  if(!Number.isFinite(start)) start = eff.start;
+  if(!Number.isFinite(end)) end = eff.end;
+
+  if(field === "start"){
+    start = Math.max(0, Math.round((start + delta) * 10) / 10);
+    if(start >= end - 0.2) end = Math.round((start + 1) * 10) / 10;
+  }else{
+    end = Math.max(start + 0.2, Math.round((end + delta) * 10) / 10);
+  }
+  el.startInput.value = String(start);
+  el.endInput.value = String(end);
+  applyTimes();
+}
+
+function setFreePlay(checked){
+  state.freePlay = !!checked;
+  if(state.freePlay){
+    toast("自由播放：不會在結束秒數自動停。");
+  }else{
+    toast("已恢復：到達結束秒數會自動停。");
+  }
+}
+
+/* ============================================================================
+   後備倒數
+   ============================================================================ */
+let audioCtx = null;
+
+function ensureAudio(){
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return null;
+    if(!audioCtx) audioCtx = new Ctx();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }catch(e){
+    return null;
+  }
+}
+
+function beep(freq = 880, duration = 0.18, delay = 0){
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  try{
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const t0 = ctx.currentTime + delay;
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.22, t0 + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.03);
+  }catch(e){}
+}
+
+function startCountdown(){
+  stopCountdown(true);
+  const eff = effective(currentQ());
+  const total = Math.max(1, Math.round(eff.end - eff.start));
+  state.countdownRemaining = total;
+
+  el.countdownNumber.textContent = String(total);
+  el.countdownSub.textContent = "秒 · " + formatTime(eff.end - eff.start) + " 段落";
+  el.countdownOverlay.hidden = false;
+
+  beep(660, 0.08, 0);
+
+  state.countdownTimer = window.setInterval(() => {
+    state.countdownRemaining -= 1;
+    if(state.countdownRemaining > 0){
+      el.countdownNumber.textContent = String(state.countdownRemaining);
+      if(state.countdownRemaining <= 3) beep(660, 0.08, 0);
+    }else{
+      el.countdownNumber.textContent = "0";
+      el.countdownSub.textContent = "時間到！請暫停音樂";
+      beep(880, 0.18, 0);
+      beep(880, 0.18, 0.24);
+      beep(1320, 0.35, 0.5);
+      window.clearInterval(state.countdownTimer);
+      state.countdownTimer = null;
+      window.setTimeout(() => {
+        if(el.countdownOverlay.hidden === false && state.countdownRemaining === 0){
+          stopCountdown(true);
+        }
+      }, 2600);
+    }
+  }, 1000);
+}
+
+function stopCountdown(silent){
+  if(state.countdownTimer){
+    window.clearInterval(state.countdownTimer);
+    state.countdownTimer = null;
+  }
+  state.countdownRemaining = 0;
+  el.countdownOverlay.hidden = true;
+  if(!silent) toast("已停止倒數");
+}
+
+/* ============================================================================
+   語音朗讀
+   ============================================================================ */
+function stopSpeech(){
+  if("speechSynthesis" in window){
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+  }
+}
+
+function speakQuestion(){
+  if(!("speechSynthesis" in window)){
+    toast("此瀏覽器不支援語音朗讀。");
+    return;
+  }
+  if(window.speechSynthesis.speaking){
+    stopSpeech();
+    toast("已停止朗讀");
+    return;
+  }
+
+  const q = currentQ();
+  stopSpeech();
+
+  const utterance = new SpeechSynthesisUtterance(q.question.replace(/\n/g, "，"));
+  utterance.lang = "zh-HK";
+  utterance.rate = 0.88;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  try{
+    const voices = window.speechSynthesis.getVoices();
+    const preferred =
+      voices.find(v => /zh[-_]HK|yue|Cantonese/i.test(v.lang + " " + v.name)) ||
+      voices.find(v => /zh[-_]TW|zh[-_]Hant/i.test(v.lang + " " + v.name)) ||
+      null;
+    if(preferred) utterance.voice = preferred;
+  }catch(e){}
+
+  utterance.onerror = () => toast("朗讀失敗，請直接讀出題目。");
+  try{
+    window.speechSynthesis.speak(utterance);
+    toast("朗讀中…再按一次可停止");
+  }catch(e){
+    toast("朗讀失敗，請直接讀出題目。");
+  }
+}
+
+/* ============================================================================
+   全螢幕
+   ============================================================================ */
+function toggleFullscreen(){
+  const doc = document;
+  const root = doc.documentElement;
+  const isFull = doc.fullscreenElement || doc.webkitFullscreenElement;
+
+  if(!isFull){
+    const request = root.requestFullscreen || root.webkitRequestFullscreen;
+    if(!request){
+      toast("此瀏覽器不支援全螢幕。");
+      return;
+    }
+    Promise.resolve(request.call(root)).catch(() => toast("無法進入全螢幕。"));
+  }else{
+    const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
+    if(exit){
+      Promise.resolve(exit.call(doc)).catch(() => {});
+    }
+  }
+}
+
+function updateFullscreenButton(){
+  const isFull = document.fullscreenElement || document.webkitFullscreenElement;
+  el.fullscreenBtn.textContent = isFull ? "⛶ 退出全螢幕" : "⛶ 全螢幕";
+}
+
+/* ============================================================================
+   事件綁定
+   ============================================================================ */
+function bindEvents(){
+  // 計分
+  document.querySelectorAll(".score-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      changeScore(btn.dataset.team, Number(btn.dataset.delta));
+    });
+  });
+  el.resetScores.addEventListener("click", resetScores);
+
+  // 分類
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => setFilter(btn.dataset.filter));
+  });
+
+  // 題目選單（事件委派）
+  el.qGrid.addEventListener("click", (event) => {
+    const btn = event.target.closest(".q-btn");
+    if(!btn) return;
+    const index = Number(btn.dataset.index);
+    if(Number.isInteger(index)) goTo(index);
+  });
+
+  // 播放 / 重播
+  el.playBtn.addEventListener("click", togglePlay);
+  el.replayBtn.addEventListener("click", replaySegment);
+
+  // 答案
+  el.revealBtn.addEventListener("click", toggleAnswer);
+
+  // 切題
+  el.prevBtn.addEventListener("click", prevQuestion);
+  el.nextBtn.addEventListener("click", nextQuestion);
+
+  // 工具列
+  el.speakBtn.addEventListener("click", speakQuestion);
+  el.fullscreenBtn.addEventListener("click", toggleFullscreen);
+  document.addEventListener("fullscreenchange", updateFullscreenButton);
+  document.addEventListener("webkitfullscreenchange", updateFullscreenButton);
+
+  // 義工工具
+  el.applyTimesBtn.addEventListener("click", applyTimes);
+  el.resetTimesBtn.addEventListener("click", resetTimes);
+  el.startNowBtn.addEventListener("click", () => setNow("start"));
+  el.endNowBtn.addEventListener("click", () => setNow("end"));
+  document.querySelectorAll("[data-adjust]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const parts = btn.dataset.adjust.split(":");
+      adjustTime(parts[0], Number(parts[1]));
+    });
+  });
+  el.freePlay.addEventListener("change", () => setFreePlay(el.freePlay.checked));
+
+  // 在輸入框按 Enter 直接套用
+  [el.startInput, el.endInput, el.videoIdInput].forEach(input => {
+    input.addEventListener("keydown", (event) => {
+      if(event.key === "Enter"){
+        event.preventDefault();
+        applyTimes();
+      }
+    });
+  });
+
+  // 後備工具
+  el.manualCountdownBtn.addEventListener("click", startCountdown);
+  el.countdownStop.addEventListener("click", () => stopCountdown(false));
+  el.countdownRestart.addEventListener("click", startCountdown);
+  el.resetAllBtn.addEventListener("click", resetAll);
+
+  // 錯誤提示
+  el.errorClose.addEventListener("click", hideError);
+  el.errorRetry.addEventListener("click", () => {
+    if(state.apiFailed){
+      window.location.reload();
+    }else{
+      togglePlay();
+    }
+  });
+
+  // 以 file:// 開啟時顯示警告
+  el.openLocalBtn.addEventListener("click", () => {
+    window.location.href = "http://127.0.0.1:8765/";
+  });
+
+  // 鍵盤快捷鍵
+  document.addEventListener("keydown", onKeyDown);
+}
+
+function onKeyDown(event){
+  const target = event.target;
+  const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
+  const isTyping = tag === "input" || tag === "textarea" || tag === "select" || (target && target.isContentEditable);
+
+  if(event.key === "Escape"){
+    if(!el.countdownOverlay.hidden){
+      event.preventDefault();
+      stopCountdown(false);
+      return;
+    }
+    if(state.answerShown){
+      event.preventDefault();
+      setAnswerShown(false);
+      return;
+    }
+    return;
+  }
+
+  if(isTyping) return;
+
+  if(event.code === "Space" || event.key === " "){
+    event.preventDefault();
+    if(!event.repeat) togglePlay();
+    return;
+  }
+
+  if(event.key === "ArrowRight"){
+    event.preventDefault();
+    nextQuestion();
+    return;
+  }
+
+  if(event.key === "ArrowLeft"){
+    event.preventDefault();
+    prevQuestion();
+    return;
+  }
+
+  if(event.key === "a" || event.key === "A"){
+    event.preventDefault();
+    toggleAnswer();
+    return;
+  }
+
+  if(event.key === "r" || event.key === "R"){
+    event.preventDefault();
+    replaySegment();
+    return;
+  }
+
+  if(event.key === "f" || event.key === "F"){
+    event.preventDefault();
+    toggleFullscreen();
+  }
+}
+
+/* ============================================================================
+   清除全部
+   ============================================================================ */
+function resetAll(){
+  if(!window.confirm("確定要清除所有分數、自訂秒數與影片 ID 嗎？此動作無法復原。")) return;
+  safeRemove(STORAGE_KEYS.scores);
+  safeRemove(STORAGE_KEYS.state);
+  safeRemove(STORAGE_KEYS.overrides);
+  window.location.reload();
+}
+
+/* ============================================================================
+   初始化
+   ============================================================================ */
+function init(){
+  loadStored();
+
+  // 如果上次的分類篩選會遮住目前題目，開機時回到「全部」
+  if(!visibleIndices().includes(state.currentIndex)){
+    state.filter = "all";
+    saveState();
+  }
+
+  renderScores();
+  renderNav();
+  renderQuestion();
+  bindEvents();
+  updateFullscreenButton();
+
+  state.speechAvailable = "speechSynthesis" in window;
+  if(!state.speechAvailable){
+    el.speakBtn.hidden = true;
+  }
+
+  if(location.protocol === "file:"){
+    el.fileWarning.hidden = false;
+  }
+
+  setStatus("loading", "播放器載入中…");
+  setPlayButton("⏳", "正在載入播放器…", true);
+  loadYouTubeAPI();
+}
+
+init();
+</script>
+</body>
+</html>
